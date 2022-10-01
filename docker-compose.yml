@@ -1,0 +1,43 @@
+version: "3.9"
+   
+services:
+  db:
+    image: postgres
+    restart: always
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+  web:
+    build: .
+    container_name: task_app
+    command: "python manage.py makemigrations && 
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8000"
+    # command: /bin/bash -c "sleep 7; python3 manage.py runserver -h 0.0.0.0 -p 8000 -r -d"
+    restart: always
+    volumes:
+      - .:/backend
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      - db
+
+  frontend:
+    restart: always
+    command : npm start
+    container_name: front_app
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    depends_on:
+      - web
